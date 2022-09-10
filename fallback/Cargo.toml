@@ -1,7 +1,14 @@
 [package]
 name = "fallback"
 version = "0.1.0"
+authors = ["Berrysoft <Strawberry_Str@hotmail.com>"]
+categories = ["data-structures"]
+description = "A helper library to implement fallback mechaism."
 edition = "2021"
+keywords = ["fallback"]
+license = "MIT"
+readme = "../README.md"
+repository = "https://github.com/Berrysoft/fallback"
 
 [dependencies]
-fallback-derive = { path = "../fallback-derive" }
+fallback-derive = { path = "../fallback-derive", version = "0.1.0" }
