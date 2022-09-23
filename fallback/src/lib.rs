@@ -6,6 +6,8 @@
 #![warn(missing_docs)]
 #![deny(unsafe_code)]
 
+use std::collections::{BTreeMap, BTreeSet, BinaryHeap, HashMap, HashSet, LinkedList, VecDeque};
+
 /// Stores two [`Option`], and provides functionality to fallback.
 ///
 /// Basically, you provides a function returns [`Option`],
@@ -96,7 +98,43 @@ impl<T> IsEmpty2 for Vec<T> {
     }
 }
 
-impl<K, V> IsEmpty2 for std::collections::HashMap<K, V> {
+impl<T> IsEmpty2 for VecDeque<T> {
+    fn is_empty2(&self) -> bool {
+        self.is_empty()
+    }
+}
+
+impl<T> IsEmpty2 for LinkedList<T> {
+    fn is_empty2(&self) -> bool {
+        self.is_empty()
+    }
+}
+
+impl<K, V> IsEmpty2 for HashMap<K, V> {
+    fn is_empty2(&self) -> bool {
+        self.is_empty()
+    }
+}
+
+impl<K, V> IsEmpty2 for BTreeMap<K, V> {
+    fn is_empty2(&self) -> bool {
+        self.is_empty()
+    }
+}
+
+impl<T> IsEmpty2 for HashSet<T> {
+    fn is_empty2(&self) -> bool {
+        self.is_empty()
+    }
+}
+
+impl<T> IsEmpty2 for BTreeSet<T> {
+    fn is_empty2(&self) -> bool {
+        self.is_empty()
+    }
+}
+
+impl<T> IsEmpty2 for BinaryHeap<T> {
     fn is_empty2(&self) -> bool {
         self.is_empty()
     }

@@ -1,6 +1,6 @@
 [package]
 name = "fallback"
-version = "0.1.0"
+version = "0.1.1"
 authors = ["Berrysoft <Strawberry_Str@hotmail.com>"]
 categories = ["data-structures"]
 description = "A helper library to implement fallback mechaism."
