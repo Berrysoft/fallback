@@ -1,5 +1,4 @@
 [workspace]
-members = [
-    "fallback",
-    "fallback-derive",
-]
+members = ["fallback", "fallback-derive"]
+
+resolver = "2"

@@ -6,8 +6,6 @@
 #![warn(missing_docs)]
 #![deny(unsafe_code)]
 
-use std::collections::{BTreeMap, BTreeSet, BinaryHeap, HashMap, HashSet, LinkedList, VecDeque};
-
 /// Stores two [`Option`], and provides functionality to fallback.
 ///
 /// Basically, you provides a function returns [`Option`],
@@ -81,69 +79,27 @@ impl<T> Fallback<Option<T>> {
     }
 }
 
-#[doc(hidden)]
-pub trait IsEmpty2 {
-    fn is_empty2(&self) -> bool;
-}
-
-impl IsEmpty2 for String {
-    fn is_empty2(&self) -> bool {
-        self.is_empty()
-    }
-}
-
-impl<T> IsEmpty2 for Vec<T> {
-    fn is_empty2(&self) -> bool {
-        self.is_empty()
-    }
-}
-
-impl<T> IsEmpty2 for VecDeque<T> {
-    fn is_empty2(&self) -> bool {
-        self.is_empty()
-    }
-}
-
-impl<T> IsEmpty2 for LinkedList<T> {
-    fn is_empty2(&self) -> bool {
-        self.is_empty()
-    }
-}
-
-impl<K, V> IsEmpty2 for HashMap<K, V> {
-    fn is_empty2(&self) -> bool {
-        self.is_empty()
-    }
-}
-
-impl<K, V> IsEmpty2 for BTreeMap<K, V> {
-    fn is_empty2(&self) -> bool {
-        self.is_empty()
-    }
-}
-
-impl<T> IsEmpty2 for HashSet<T> {
-    fn is_empty2(&self) -> bool {
-        self.is_empty()
-    }
-}
-
-impl<T> IsEmpty2 for BTreeSet<T> {
-    fn is_empty2(&self) -> bool {
-        self.is_empty()
-    }
-}
-
-impl<T> IsEmpty2 for BinaryHeap<T> {
-    fn is_empty2(&self) -> bool {
-        self.is_empty()
-    }
-}
-
-impl<T: IsEmpty2> Fallback<T> {
+impl<T> Fallback<T>
+where
+    for<'a> &'a T: IntoIterator,
+    for<'a> <&'a T as IntoIterator>::IntoIter: ExactSizeIterator,
+{
     /// Treats the empty container as [`None`] and fallbacks.
     pub fn and_any(self) -> Option<T> {
-        self.and_then(|s| if s.is_empty2() { None } else { Some(s) })
+        self.and_then(|s| {
+            if s.into_iter().len() == 0 {
+                None
+            } else {
+                Some(s)
+            }
+        })
+    }
+}
+
+impl<T: AsRef<str>> Fallback<T> {
+    /// Treats the empty string as [`None`] and fallbacks.
+    pub fn and_any_str(self) -> Option<T> {
+        self.and_then(|s| if s.as_ref().is_empty() { None } else { Some(s) })
     }
 }
 
@@ -159,16 +115,16 @@ impl<T> From<Fallback<T>> for Option<T> {
 
 #[doc(hidden)]
 pub struct FallbackIter<A> {
-    data: A,
-    base_data: A,
+    data: Option<A>,
+    base_data: Option<A>,
 }
 
 impl<A: Iterator> Iterator for FallbackIter<A> {
     type Item = Fallback<A::Item>;
 
     fn next(&mut self) -> Option<Self::Item> {
-        let d = self.data.next();
-        let based = self.base_data.next();
+        let d = self.data.as_mut().and_then(|data| data.next());
+        let based = self.base_data.as_mut().and_then(|data| data.next());
         if d.is_some() || based.is_some() {
             Some(Fallback::new(d, based))
         } else {
@@ -177,15 +133,15 @@ impl<A: Iterator> Iterator for FallbackIter<A> {
     }
 }
 
-impl<T> IntoIterator for Fallback<Vec<T>> {
-    type Item = Fallback<T>;
+impl<T: IntoIterator> IntoIterator for Fallback<T> {
+    type Item = Fallback<T::Item>;
 
-    type IntoIter = FallbackIter<<Vec<T> as IntoIterator>::IntoIter>;
+    type IntoIter = FallbackIter<std::iter::Fuse<T::IntoIter>>;
 
     fn into_iter(self) -> Self::IntoIter {
         FallbackIter {
-            data: self.data.unwrap_or_default().into_iter(),
-            base_data: self.base_data.unwrap_or_default().into_iter(),
+            data: self.data.map(|data| data.into_iter().fuse()),
+            base_data: self.base_data.map(|data| data.into_iter().fuse()),
         }
     }
 }
@@ -263,5 +219,25 @@ mod test {
     fn option() {
         let f = Fallback::new(None, Some(100));
         assert_eq!(Option::from(f), Some(100));
+    }
+
+    #[test]
+    fn empty() {
+        let f = Fallback::new(Some(vec![]), Some(vec![1, 1, 4, 5, 1, 4]));
+        assert_eq!(f.and_any(), Some(vec![1, 1, 4, 5, 1, 4]));
+
+        let f = Fallback::new(Some(String::new()), Some("Hello world!".to_string()));
+        assert_eq!(f.and_any_str(), Some("Hello world!".to_string()));
+    }
+
+    #[test]
+    fn iter() {
+        let f = Fallback::new(Some(vec![3, 2, 1]), Some(vec![1, 1, 4, 5, 1, 4]));
+        assert_eq!(
+            f.into_iter()
+                .map(|data| data.fallback().unwrap())
+                .collect::<Vec<_>>(),
+            [3, 2, 1, 5, 1, 4]
+        );
     }
 }
