@@ -55,11 +55,14 @@ pub fn derive_fallback_spec(input: TokenStream) -> TokenStream {
                     let construct = fields
                         .iter()
                         .map(|field| {
-                            parse_str::<FieldValue>(&format!(
-                                "{0}: ::fallback::Fallback::new({0}, base_{0})",
-                                field.ident.clone().unwrap()
-                            ))
-                            .expect("Parse field value failed")
+                            let ident = field.ident.clone().unwrap();
+                            let base_ident =
+                                Ident::new(&format!("base_{}", ident.clone()), ident.span());
+                            FieldValue::parse
+                                .parse2(
+                                    quote! {#ident: ::fallback::Fallback::new(#ident, #base_ident)},
+                                )
+                                .expect("Parse field value failed")
                         })
                         .collect::<Vec<_>>();
                     (
